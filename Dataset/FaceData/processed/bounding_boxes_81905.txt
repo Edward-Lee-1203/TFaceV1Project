@@ -1,0 +1,9 @@
+Dataset/FaceData/processed\Heo\heo20.png 144 82 468 514
+Dataset/FaceData/processed\Heo\Screenshot (487).png 0 0 78 84
+Dataset/FaceData/processed\Heo\heo49.png 420 0 793 400
+Dataset/FaceData/processed\Heo\heo15.png 395 37 764 511
+Dataset/FaceData/processed\Heo\heo44.png 319 94 399 186
+Dataset/FaceData/processed\Tuan\z2389139049316_7e9dbbba86c2c7e32e21c1fead665f93.png 161 383 614 935
+Dataset/FaceData/processed\Tuan\z2389139110045_c62ddefa00ba1df4f62bee86d2bf6bc9.png 195 329 627 880
+Dataset/FaceData/processed\Tuan\z2389139113887_c571d2cac1adc81da7cab47c33080a53.png 259 367 673 861
+Dataset/FaceData/processed\Tuan\z2389139123246_048b514c54ed667283febb71ee60bd05.png 181 329 602 851
