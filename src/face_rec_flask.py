@@ -24,8 +24,8 @@ THRESHOLD = [0.6, 0.7, 0.7]
 FACTOR = 0.709
 IMAGE_SIZE = 182
 INPUT_IMAGE_SIZE = 160
-CLASSIFIER_PATH = '../Models/facemodel.pkl'
-FACENET_MODEL_PATH = '../Models/20180402-114759.pb'
+CLASSIFIER_PATH = 'Models/facemodel.pkl'
+FACENET_MODEL_PATH = 'Models/20180402-114759.pb'
 
 # Load The Custom Classifier
 with open(CLASSIFIER_PATH, 'rb') as file:
@@ -47,9 +47,7 @@ images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
 embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
 phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
 embedding_size = embeddings.get_shape()[1]
-pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "align")
-
-
+pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "src/align")
 
 app = Flask(__name__)
 CORS(app)
@@ -67,14 +65,11 @@ def upload_img_file():
     if request.method == 'POST':
         # base 64
         name="Unknown"
-        f = request.form.get('image')
-        w = int(request.form.get('w'))
-        h = int(request.form.get('h'))
+        f = request.files.get('image')
 
-        decoded_string = base64.b64decode(f)
-        frame = np.fromstring(decoded_string, dtype=np.uint8)
-        #frame = frame.reshape(w,h,3)
-        frame = cv2.imdecode(frame, cv2.IMREAD_ANYCOLOR)  # cv2.IMREAD_COLOR in OpenCV 3.1
+        image = np.asarray(bytearray(f.read()), dtype="uint8")
+
+        frame = cv2.imdecode(image, cv2.IMREAD_COLOR)
 
         bounding_boxes, _ = align.detect_face.detect_face(frame, MINSIZE, pnet, rnet, onet, THRESHOLD, FACTOR)
 
