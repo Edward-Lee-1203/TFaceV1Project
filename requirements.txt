@@ -8,3 +8,4 @@ matplotlib
 Pillow
 requests
 psutil
+flask-cors
