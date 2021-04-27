@@ -329,6 +329,14 @@ def get_dataset(path, has_class_directories=True):
   
     return dataset
 
+
+def get_imgDirs(path, has_class_directories=True):
+
+    path_exp = os.path.expanduser(path)
+    image_paths = get_image_paths(path_exp)
+
+    return image_paths
+
 def get_image_paths(facedir):
     image_paths = []
     if os.path.isdir(facedir):

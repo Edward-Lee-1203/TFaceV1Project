@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from PIL import Image
 from flask import Flask
 from flask import render_template, flash, redirect, url_for, request
 from flask_cors import CORS, cross_origin
@@ -43,6 +44,7 @@ print('Loading feature extraction model')
 facenet.load_model(FACENET_MODEL_PATH)
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_FOLDER_RAW = 'C:/Users/Admin/PycharmProjects/TFaceV1Project/Dataset/FaceData/raw'
 
 # Get input and output tensors
 images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
@@ -53,6 +55,7 @@ pnet, rnet, onet = align.detect_face.create_mtcnn(sess, "src/align")
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///Dataset/FaceData/TFace.db'
+app.config['UPLOAD_FOLDER_RAW'] = UPLOAD_FOLDER_RAW
 app.config['SECRET_KEY'] = 'Edward secret key <3'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
@@ -65,7 +68,7 @@ CORS(app)
 def index():
     return "OK!";
 
-@app.route('/recog', methods=['POST'])
+@app.route('/identified', methods=['POST'])
 @cross_origin()
 def upload_img_file():
     if request.method == 'POST':
@@ -101,7 +104,7 @@ def upload_img_file():
                     feed_dict = {images_placeholder: scaled_reshape, phase_train_placeholder: False}
                     emb_array = sess.run(embeddings, feed_dict=feed_dict)
 
-                    # Dua vao model de classifier
+                    # Dua vao model de classifier   
                     predictions = model.predict_proba(emb_array)
                     best_class_indices = np.argmax(predictions, axis=1)
                     best_class_probabilities = predictions[
@@ -112,7 +115,7 @@ def upload_img_file():
                     print("Name: {}, Probability: {}".format(best_name, best_class_probabilities))
 
                     # Neu ty le nhan dang > 0.5 thi hien thi ten
-                    if best_class_probabilities > 0.8:
+                    if best_class_probabilities > 0.85:
                         name = class_names[best_class_indices[0]]
                     else:
                         # Con neu <=0.5 thi hien thi Unknow
@@ -121,14 +124,13 @@ def upload_img_file():
             pass
     return name;
 
-@app.route('/tranningAgain', methods=['GET'])
+@app.route('/tranning', methods=['GET'])
 @cross_origin()
 def align_dataset_mtcnn_again():
-    os.system("python src/align_dataset_mtcnn.py  Dataset/FaceData/raw Dataset/FaceData/processed --image_size 160 --margin 32  --random_order --gpu_memory_fraction 0.25")
     os.system("python src/classifier.py TRAIN Dataset/FaceData/processed Models/20180402-114759.pb Models/facemodel.pkl --batch_size 1000")
     return "Success"
 
-@app.route('/tranning', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 @cross_origin()
 def align_dataset_mtcnn():
     if request.method == 'POST':
@@ -155,13 +157,40 @@ def align_dataset_mtcnn():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             flash('File successfully uploaded ' + file.filename + ' to the database!')
 
-    os.system("python src/align_dataset_mtcnn.py  Dataset/FaceData/raw Dataset/FaceData/processed --image_size 160 --margin 32  --random_order --gpu_memory_fraction 0.25")
-    os.system("python src/classifier.py TRAIN Dataset/FaceData/processed Models/20180402-114759.pb Models/facemodel.pkl --batch_size 1000")
+    os.system("python src/align_dataset_mtcnn.py  Dataset/FaceData/raw"
+              + " Dataset/FaceData/processed --image_size 160 "
+              + "--margin 32  --random_order --gpu_memory_fraction 0.25")
+
+    output_dir = os.path.expanduser("Dataset/FaceData/processed/")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    nrof_images_total = 0
+    output_class_dir = os.path.join(output_dir, directory)
+    if not os.path.exists(output_class_dir):
+        os.makedirs(output_class_dir)
+    for image_path in facenet.get_imgDirs("Dataset/FaceData/processed/" + directory):
+        nrof_images_total += 1
+        filename = os.path.splitext(os.path.split(image_path)[1])[0] + str(nrof_images_total)
+        output_filename = os.path.join(output_class_dir, filename + '.png')
+        print(image_path)
+        image_obj = Image.open(image_path)
+        rotated_image1 = image_obj.rotate(90)
+        rotated_image1.save(output_filename)
+        output_filename = os.path.join(output_class_dir, filename + '1.png')
+        rotated_image2 = image_obj.convert('L')
+        rotated_image2.save(output_filename)
+        output_filename = os.path.join(output_class_dir, filename + '2.png')
+        rotated_image3 = image_obj.rotate(180)
+        rotated_image3.save(output_filename)
+        output_filename = os.path.join(output_class_dir, filename + '3.png')
+        rotated_image5 = image_obj.rotate(270)
+        rotated_image5.save(output_filename)
 
     return "Success"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0',port='8000')
